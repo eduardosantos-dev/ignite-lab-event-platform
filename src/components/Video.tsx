@@ -1,55 +1,23 @@
 import { DefaultUi, Player, Youtube } from "@vime/react";
-import {
-  CaretRight,
-  DiscordLogo,
-  FileArrowDown,
-  Lightning,
-} from "phosphor-react";
-import { gql, useQuery } from "@apollo/client";
+import { DiscordLogo, Lightning } from "phosphor-react";
 
 import "@vime/core/themes/default.css";
 import { FeaturedLink } from "./FeaturedLink";
 import { CustomLink } from "./CustomLink";
+import { useGetLessonBySlugQuery } from "../graphql/generated";
 
-const GET_LESSON_BY_SLUG_QUERY = gql`
-  query GetLessonBySlug($slug: String) {
-    lesson(where: { slug: $slug }) {
-      title
-      videoId
-      description
-      teacher {
-        bio
-        name
-        avatarURL
-      }
-    }
-  }
-`;
-
-interface GetLessonBySlugResponse {
-  lesson: {
-    title: string;
-    videoId: string;
-    description: string;
-    teacher: {
-      bio: string;
-      avatarURL: string;
-      name: string;
-    };
-  };
-}
 interface VideoProps {
   lessonSlug: string;
 }
 
 export function Video({ lessonSlug }: VideoProps) {
-  const { data } = useQuery<GetLessonBySlugResponse>(GET_LESSON_BY_SLUG_QUERY, {
+  const { data } = useGetLessonBySlugQuery({
     variables: {
       slug: lessonSlug,
     },
   });
 
-  if (!data) {
+  if (!data || !data.lesson) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <p>Carregando...</p>
@@ -77,22 +45,24 @@ export function Video({ lessonSlug }: VideoProps) {
             <p className="mt-4 text-gray-200 leading-relaxed text-sm md:text-base">
               {data.lesson.description}
             </p>
-            <div className="flex items-center gap-4 mt-6">
-              <img
-                src={data.lesson.teacher.avatarURL}
-                alt={data.lesson.teacher.name}
-                className="h-16 w-16 rounded-full border-2 border-blue-500"
-              />
+            {data.lesson.teacher && (
+              <div className="flex items-center gap-4 mt-6">
+                <img
+                  src={data.lesson.teacher.avatarURL}
+                  alt={data.lesson.teacher.name}
+                  className="h-16 w-16 rounded-full border-2 border-blue-500"
+                />
 
-              <div className="leading-relaxed">
-                <strong className="font-bold text-lg md:text-2xl block">
-                  {data.lesson.teacher.name}
-                </strong>
-                <span className="text-gray-200 text-sm block">
-                  {data.lesson.teacher.bio}
-                </span>
+                <div className="leading-relaxed">
+                  <strong className="font-bold text-lg md:text-2xl block">
+                    {data.lesson.teacher.name}
+                  </strong>
+                  <span className="text-gray-200 text-sm block">
+                    {data.lesson.teacher.bio}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div className="flex flex-col gap-4 w-full xl:w-fit">
             <CustomLink variant="primary" href="">
